@@ -22,12 +22,12 @@ jobs:
                 -DANDROID_PLATFORM=android-24 \
                 ..
           make -j4
+          echo "=== 文件列表 ==="
+          ls -R
 
       - name: Upload library
         uses: actions/upload-artifact@v4
         with:
           name: libdrmhook
-          # 修正路径！so在build目录下
-          path: build/libdrmhook.so
-
-
+          path: |
+            build/**/*.so
