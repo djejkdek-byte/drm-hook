@@ -25,7 +25,6 @@ jobs:
         run: |
           cd ${{ runner.temp }}
           FILE="android-ndk-r27b-linux.zip"
-          #优先国内镜像，失败自动切谷歌官方源
           wget -q --timeout=90 --tries=3 https://mirrors.aliyun.com/android-ndk/$FILE || \
           wget -q --timeout=90 --tries=3 https://dl.google.com/android/repository/$FILE
           unzip -q -o $FILE
@@ -39,6 +38,11 @@ jobs:
       - name: Start ndk-build compile
         run: |
           ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
+      
+      - name: Debug List libs folder
+        run: |
+          ls -la
+          ls -la libs/ || echo "libs文件夹不存在！"
       
       - name: Upload compiled so artifacts
         uses: actions/upload-artifact@v4
