@@ -37,12 +37,18 @@ jobs:
 
       - name: Start ndk-build compile
         run: |
+          pwd
+          ls -la
           ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
       
-      - name: Debug List libs folder
+      - name: Debug 遍历全部文件，查找so
         run: |
+          echo "===根目录文件==="
           ls -la
-          ls -la libs/ || echo "libs文件夹不存在！"
+          echo "===libs文件夹==="
+          ls -la libs/ || echo "❌libs文件夹不存在"
+          echo "===查找全部.so文件==="
+          find . -name "*.so"
       
       - name: Upload compiled so artifacts
         uses: actions/upload-artifact@v4
