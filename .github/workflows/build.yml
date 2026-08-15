@@ -1,27 +1,48 @@
-name: Build so‑NDKBuild
-on: push
+name: Build so-NDKBuild
+on:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu‑latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-
-      - name: 下载NDK
-        uses: nttld/setup-ndk@v1
+      - name: Checkout source code
+        uses: actions/checkout@v4
         with:
-          ndk-version: r27b
-          local‑ndk‑path: ndk
+          fetch-depth: 1
 
-      - name: 编译
-        env:
-          NDK_PATH: ${{ github.workspace }}/ndk
+      - name: Cache Android NDK r27b
+        id: cache_ndk
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/android-ndk
+          key: ndk-r27b-v2
+
+      - name: Download NDK (Mirror fallback)
+        if: steps.cache_ndk.outputs.cache-hit != 'true'
         run: |
-          mkdir -p obj libs
-          $NDK_PATH/ndk‑build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=Android.mk
+          cd ${{ runner.temp }}
+          FILE="android-ndk-r27b-linux.zip"
+          #优先国内镜像，失败自动切谷歌官方源
+          wget -q --timeout=90 --tries=3 https://mirrors.aliyun.com/android-ndk/$FILE || \
+          wget -q --timeout=90 --tries=3 https://dl.google.com/android/repository/$FILE
+          unzip -q -o $FILE
+          mv android-ndk-r27b android-ndk
 
-      - name: 上传so
+      - name: Export NDK environment
+        run: |
+          echo "NDK_PATH=${{ runner.temp }}/android-ndk" >> $GITHUB_ENV
+          echo "${{ runner.temp }}/android-ndk" >> $GITHUB_PATH
+
+      - name: Start ndk-build compile
+        run: |
+          ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk
+      
+      - name: Upload compiled so artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: libs
+          name: compiled-so-libs
           path: libs/
+          retention-days: 7
